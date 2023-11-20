@@ -1,128 +1,103 @@
-graph = [
-    [0, 2, 0, 6, 0],
-    [2, 0, 3, 8, 5],
-    [0, 3, 0, 0, 7],
-    [6, 8, 0, 0, 9],
-    [0, 5, 7, 9, 0]
-]
+import heapq
+from collections import defaultdict 
 
+def add_edge(graph, edges, u, v, w):
+    graph[u].append((v, w))
+    graph[v].append((u, w))
+    edges.add((u, v, w))
+    edges.add((v, u, w))
 
-def fleury(graph, start):
-    n = len(graph)
-    visited = [False] * n
-    path = []
-    current_vertex = start
-
-    while True:
-        path.append(current_vertex)
-        if len(path) == n:
-            break
-
-        for i in range(n):
-            if graph[current_vertex][i] != 0 and not visited[i]:
-                break
-
-        if len(path) == n - 1:
-            path.append(i)
-            break
-
-        path_weight = 0
-        for j in range(n):
-            if graph[current_vertex][j] != 0:
-                path_weight += graph[current_vertex][j]
-
-        for j in range(n):
-            if graph[current_vertex][j] != 0:
-                graph[current_vertex][j] = 0
-                graph[j][current_vertex] = 0
-                break
-
-        visited[current_vertex] = True
-        current_vertex = i
-
-    return path
+def eulerian_cycle(graph):
+    temp_graph = {vertex: list(neighbors) for vertex, neighbors in graph.items()}
+    stack = []
+    cycle = []
+    total_weight = 0
+    current_vertex = next(iter(graph))
+    stack.append(current_vertex)
+    while stack:
+        if temp_graph[current_vertex]:
+            next_vertex, w = temp_graph[current_vertex].pop()
+            total_weight += w
+            temp_graph[next_vertex] = [(v, weight) for v, weight in temp_graph[next_vertex] if v != current_vertex]
+            current_vertex = next_vertex
+            stack.append(current_vertex)
+        else:
+            cycle.append(stack.pop())
+            if stack:
+                current_vertex = stack[-1]
+    cycle.reverse()
+    return cycle, total_weight
 
 def dijkstra(graph, start, end):
-    n = len(graph)
-    visited = [False] * n
-    distance = [float("inf")] * n
-    distance[start] = 0
+    min_dist = {vertex: float('infinity') for vertex in graph}
+    min_dist[start] = 0
+    priority_queue = [(0, start)]
 
-    for _ in range(n):
-        min_distance = float("inf")
-        u = -1
+    while priority_queue:
+        current_dist, current_vertex = heapq.heappop(priority_queue)
 
-        for i in range(n):
-            if not visited[i] and distance[i] < min_distance:
-                min_distance = distance[i]
-                u = i
+        if current_dist > min_dist[current_vertex]:
+            continue
 
-        if u == -1:
-            break
+        for neighbor, weight in graph[current_vertex]:
+            distance = current_dist + weight
 
-        visited[u] = True
+            if distance < min_dist[neighbor]:
+                min_dist[neighbor] = distance
+                heapq.heappush(priority_queue, (distance, neighbor))
 
-        for v in range(n):
-            if not visited[v] and graph[u][v] != 0 and distance[u] + graph[u][v] < distance[v]:
-                distance[v] = distance[u] + graph[u][v]
+    return min_dist[end]
 
-    return distance[end]
+def find_eulerian_cycle(edges):
+    graph = defaultdict(list)
+    edge_set = set()
+    for edge in edges:
+        add_edge(graph, edge_set, *edge)
 
-def minimum_weight_perfect_matching(graph):
-    n = len(graph)
-    visited = [False] * n
-    matching = []
-    start_vertex = 0
-    visited[start_vertex] = True
+    odd_vertex_num = 0
+    odd_vertex_list = []
+    #czy jest Eulerianer
+    for i in graph:
+        if len(graph[i]) % 2 != 0:
+            odd_vertex_num += 1
+            for j in graph[i]:
+                odd_vertex_list.append([i, j[0], j[1]])
+    if odd_vertex_num == 0:
+        return eulerian_cycle(graph)
+    #czy jest Halbeulerianisch
+    elif odd_vertex_num == 2:
+        odd_vertices = [vertex for vertex in graph if len(graph[vertex]) % 2 != 0]
+        min_weight_path = dijkstra(graph, odd_vertices[0], odd_vertices[1])
+        eulerian_cycle_result = eulerian_cycle(graph)
+        return eulerian_cycle_result, min_weight_path
+    else:
+        for i in odd_vertex_list:
+            if i[0] > i[1]:
+                tmp = i[0]
+                i[0] = i[1]
+                i[1] = tmp
 
-    while len(matching) < n - 1:
-        min_weight = float("inf")
-        u, v = -1, -1
+        odd_vertex_list = [element for element in odd_vertex_list if odd_vertex_list.count(element) > 1]
+        add_edge_list = []
+        for element in reversed(odd_vertex_list):
+            if element not in add_edge_list:
+                add_edge_list.insert(0, element)
 
-        for i in range(n):
-            if visited[i]:
-                for j in range(n):
-                    if not visited[j] and graph[i][j] != 0 and graph[i][j] < min_weight:
-                        min_weight = graph[i][j]
-                        u = i
-                        v = j
+        for u, v, w in add_edge_list:
+            add_edge(graph, edge_set, u, v, w)
 
-        if u != -1 and v != -1:
-            matching.append((u, v, min_weight))
-            visited[v] = True
-    return matching
+        return eulerian_cycle(graph)
 
-def chinese_postman_path(grahp,start):
-    odd_degree_vertices = []
-    for i in range(len(graph)):
-        if sum(graph[i]) % 2 != 0:
-            odd_degree_vertices.append(i)
+edges_eulerian = [(1, 2, 3), (2, 3, 1), (3, 1, 2)]
+print("Eulerian Graph:")
+print(find_eulerian_cycle(edges_eulerian))
+print("\n")
 
-    G_prime = [[0 for _ in range(len(odd_degree_vertices))] for _ in range(len(odd_degree_vertices))]
-    for i in range(len(odd_degree_vertices)):
-        for j in range(len(odd_degree_vertices)):
-            G_prime[i][j] = dijkstra(graph, odd_degree_vertices[i], odd_degree_vertices[j])
+edges_semi_eulerian = [(1, 2, 3), (2, 3, 1), (3, 4, 5), (4, 1, 2)]
+print("Semi-Eulerian Graph:")
+print(find_eulerian_cycle(edges_semi_eulerian))
+print("\n")
 
-    matching = minimum_weight_perfect_matching(G_prime)
-
-    for u, v, _ in matching:
-        matching[u] = (odd_degree_vertices[u], odd_degree_vertices[v])
-
-    eulerian_cycle = fleury(graph, start)
-    eulerian_cycle = eulerian_cycle[:-1]
-    eulerian_cycle = eulerian_cycle + [start]
-
-    path = []
-    for vertex in eulerian_cycle:
-        if vertex not in path:
-            path.append(vertex)
-
-    return path
-
-if __name__ == "__main__":
-    path = chinese_postman_path(graph, 0)
-    total_weight = 0
-    for i in range(len(path) - 1):
-        total_weight += graph[path[i]][path[i + 1]]
-    print(f"Ścieżka chińskiego listonosza: {path}")
-    print(f"Całkowita waga: {total_weight}")
+edges_not_eulerian = [(1, 2, 3), (2, 3, 1), (3, 4, 5)]
+print("Non-Eulerian Graph:")
+print(find_eulerian_cycle(edges_not_eulerian))
