@@ -1,11 +1,32 @@
 import heapq
-from collections import defaultdict 
+from collections import defaultdict
+import networkx as nx
 
 def add_edge(graph, edges, u, v, w):
     graph[u].append((v, w))
     graph[v].append((u, w))
     edges.add((u, v, w))
     edges.add((v, u, w))
+
+def find_min_matching(graph):
+    min_weight = float('infinity')
+    min_matching = []
+    for vertex in graph:
+        for neighbor, weight in graph[vertex]:
+            if weight < min_weight:
+                min_weight = weight
+                min_matching = [(vertex, neighbor, weight)]
+    return min_matching
+
+# def find_min_matching(graph):
+#     nx_graph = nx.Graph()
+
+#     for u, v, w in graph:
+#         nx_graph.add_edge(u, v, weight=w)
+#     max_matching = nx.max_weight_matching(nx_graph, weight='weight')
+#     matching_edges = [(u, v, w) for (u, v), w in max_matching.items()]
+
+#     return matching_edges
 
 def eulerian_cycle(graph):
     temp_graph = {vertex: list(neighbors) for vertex, neighbors in graph.items()}
@@ -71,19 +92,13 @@ def find_eulerian_cycle(edges):
         eulerian_cycle_result = eulerian_cycle(graph)
         return eulerian_cycle_result, min_weight_path
     else:
-        for i in odd_vertex_list:
-            if i[0] > i[1]:
-                tmp = i[0]
-                i[0] = i[1]
-                i[1] = tmp
+        h_graph = defaultdict(list)
+        for u, v, w in odd_vertex_list:
+            add_edge(h_graph, set(), u, v, w)
+        
+        min_matching = find_min_matching(h_graph)
 
-        odd_vertex_list = [element for element in odd_vertex_list if odd_vertex_list.count(element) > 1]
-        add_edge_list = []
-        for element in reversed(odd_vertex_list):
-            if element not in add_edge_list:
-                add_edge_list.insert(0, element)
-
-        for u, v, w in add_edge_list:
+        for u, v, w in min_matching:
             add_edge(graph, edge_set, u, v, w)
 
         return eulerian_cycle(graph)
@@ -98,6 +113,6 @@ print("Semi-Eulerian Graph:")
 print(find_eulerian_cycle(edges_semi_eulerian))
 print("\n")
 
-edges_not_eulerian = [(1, 2, 3), (2, 3, 1), (3, 4, 5)]
+edges_not_eulerian = [(1, 2, 1), (1, 3, 1), (1, 4, 1), (2, 3, 1), (2, 4, 1), (3, 4, 1)]
 print("Non-Eulerian Graph:")
 print(find_eulerian_cycle(edges_not_eulerian))
