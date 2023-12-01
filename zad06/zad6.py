@@ -19,20 +19,25 @@ def triangle(edge1, edge2, third_edge):
 
 
 def min_perfect_matching(G):
-    maximal = list(nx.maximal_matching(G))
-    min_weight = np.inf
-    min_weight_matching = []
-    for perm in permutations(maximal):
-        weight = sum([G.edges[e]['weight'] for e in perm])
-        if weight < min_weight:
-            min_weight = weight
-            min_weight_matching = perm
+    # maximal = list(nx.maximal_matching(G))
+    # min_weight = np.inf
+    # min_weight_matching = []
+    # for perm in permutations(maximal):
+    #     weight = sum([G.edges[e]['weight'] for e in perm])
+    #     if weight < min_weight:
+    #         min_weight = weight
+    #         min_weight_matching = perm
 
-    is_perfect = nx.is_perfect_matching(G, min_weight_matching)
+    # is_perfect = nx.is_perfect_matching(G, min_weight_matching)
+    # if not is_perfect:
+    #     raise Exception('Not perfect matching')
+
+    # return min_weight_matching
+
+    is_perfect = nx.is_perfect_matching(G, nx.min_weight_matching(G))
     if not is_perfect:
         raise Exception('Not perfect matching')
-
-    return min_weight_matching 
+    return nx.min_weight_matching(G)
 
 def christofides(G):
 
