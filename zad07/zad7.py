@@ -39,5 +39,10 @@ def test():
     print(f'Karacuba: {time_karacuba}')
     print(f'Normalne: {time_normalne}')
 
+    print(f'Karacuba: {result_karacuba}')
+    print(f'Normalne: {result_normalne}')
+
+    print(f'Porównanie: {result_karacuba == result_normalne}')
+
 if __name__ == "__main__":
     test()
