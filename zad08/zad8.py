@@ -41,7 +41,8 @@ def gantt_chart(graph, earliest_start, critical_path):
 
     for i, node in enumerate(sorted_nodes):
         color = 'red' if node in critical_path else 'blue'
-        ax.barh(node, graph.nodes[node]['duration'], left=start_times[i], color=color)
+        duration = 0 if not graph[node] else list(graph[node].values())[0]['duration']
+        ax.barh(node, duration, left=start_times[i], color=color)
 
     ax.set_xlabel('Czas')
     ax.set_ylabel('Zadania')
@@ -63,4 +64,4 @@ print("Najpóźniejsze czasy rozpoczęcia:", latest_start)
 print("Ścieżka krytyczna:", critical_path)
 
 visualize_graph(graph)
-# gantt_chart(G, earliest_start, critical_path)
+gantt_chart(G, earliest_start, critical_path)
